@@ -19,6 +19,12 @@
 					active-class="bg-gray-100 text-primary font-bold">
 					❤️ Interesses
 				</router-link>
+				<router-link
+					to="/app/favorites"
+					class="block py-2 px-4 text-gray-600 hover:bg-gray-50 rounded"
+					active-class="bg-gray-100 text-primary font-bold">
+					⭐ Favoritos
+				</router-link>
 			</nav>
 		</aside>
 
