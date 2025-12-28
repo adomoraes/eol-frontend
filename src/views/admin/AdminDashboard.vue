@@ -89,13 +89,14 @@
 						class="px-4 py-2 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 font-medium text-sm transition-colors">
 						+ Nova Entrevista
 					</button>
-					<button
-						class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 font-medium text-sm transition-colors">
-						+ Nova Categoria
-					</button>
+					<router-link
+						to="/admin/categories"
+						class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 font-medium text-sm transition-colors inline-block">
+						+ Categorias
+					</router-link>
 					<button
 						class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors ml-auto">
-						Gerir Utilizadores
+						+ Usuários
 					</button>
 				</div>
 			</div>
