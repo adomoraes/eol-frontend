@@ -5,12 +5,16 @@
 			<div class="flex justify-between items-start mb-3">
 				<button
 					@click.stop="goToCategory"
-					:class="
+					:class="[
 						variant === 'purple'
-							? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-							: 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-					"
-					class="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded transition-colors">
+							? 'bg-purple-100 text-purple-700'
+							: 'bg-blue-100 text-blue-700',
+						hasCategoryId
+							? 'hover:bg-opacity-80 cursor-pointer'
+							: 'cursor-default',
+					]"
+					class="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded transition-colors"
+					:disabled="!hasCategoryId">
 					{{
 						content.category?.name ||
 						(content.type === "interview" ? "Entrevista" : "Artigo")
@@ -63,9 +67,10 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router" // <--- IMPORTAÇÃO ESSENCIAL
+import { computed } from "vue"
+import { useRouter } from "vue-router"
 
-const router = useRouter() // <--- INICIALIZAÇÃO ESSENCIAL
+const router = useRouter()
 
 const props = defineProps({
 	content: Object,
@@ -84,21 +89,24 @@ const formatDate = (dateString) => {
 	})
 }
 
-// Navegar para Categoria
+// Verifica se temos o ID da categoria
+const hasCategoryId = computed(() => {
+	return !!(props.content.category_id || props.content.category?.id)
+})
+
 const goToCategory = () => {
-	if (props.content.category_id) {
+	const catId = props.content.category_id || props.content.category?.id
+	if (catId) {
 		router.push({
 			name: "CategoryView",
-			params: { id: props.content.category_id },
+			params: { id: catId },
 		})
 	}
 }
 
-// Navegar para Artigo Completo
 const goToArticle = () => {
 	const type =
 		props.content.type || (props.variant === "purple" ? "interview" : "article")
-	// Fallback de segurança para o ID
 	const targetId =
 		props.content.id || props.content.item_id || props.content.article_id
 

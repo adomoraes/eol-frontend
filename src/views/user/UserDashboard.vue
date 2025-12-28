@@ -65,15 +65,6 @@
 						@toggle-favorite="handleToggleFavorite" />
 				</div>
 			</section>
-
-			<div
-				v-if="!loading && recommended.length === 0 && articles.length === 0"
-				class="text-center py-12 bg-white rounded-lg shadow">
-				<p class="text-gray-500 mb-4">Não encontrámos conteúdo para mostrar.</p>
-				<button @click="fetchData" class="text-primary hover:underline">
-					Tentar novamente
-				</button>
-			</div>
 		</div>
 	</div>
 </template>
@@ -88,20 +79,22 @@ import ArticleCard from "@/components/ArticleCard.vue"
 const authStore = useAuthStore()
 const loading = ref(true)
 
-// Dados
 const recommended = ref([])
 const articles = ref([])
 const interviews = ref([])
 const myFavoritesIds = ref([])
+const allCategories = ref([]) // <--- NOVO: Para cruzar dados
 
 const fetchData = async () => {
 	loading.value = true
 	try {
-		const [dashRes, artRes, intRes, favRes] = await Promise.all([
+		// Buscamos tudo E as categorias para fazer o "match"
+		const [dashRes, artRes, intRes, favRes, catRes] = await Promise.all([
 			contentService.getDashboard(),
 			contentService.getArticles(),
 			contentService.getInterviews(),
 			userService.getFavorites(),
+			contentService.getCategories(), // <--- NOVO
 		])
 
 		recommended.value = dashRes.data || (Array.isArray(dashRes) ? dashRes : [])
@@ -110,46 +103,55 @@ const fetchData = async () => {
 
 		const favList = favRes.data || (Array.isArray(favRes) ? favRes : [])
 		myFavoritesIds.value = favList.map((f) => f.id)
+
+		// Guardamos as categorias
+		allCategories.value = catRes.data || catRes || []
 	} catch (error) {
-		console.error("Erro ao carregar dashboard:", error)
+		console.error("Erro no dashboard:", error)
 	} finally {
 		loading.value = false
 	}
 }
 
-// 🔧 FUNÇÃO DE NORMALIZAÇÃO CORRIGIDA
+// 🔧 NORMALIZAÇÃO MELHORADA
 const normalizeItem = (item) => {
-	// Tenta encontrar o ID da categoria em vários lugares possíveis
-	// 1. item.category_id (padrão SQL)
-	// 2. item.category.id (se vier objeto aninhado)
-	const catId = item.category_id || (item.category ? item.category.id : null)
+	// 1. Tenta pegar o ID direto
+	let catId = item.category_id || (item.category ? item.category.id : null)
+
+	// 2. CORREÇÃO: Se não achou ID, mas tem nome (ex: "Tecnologia"), procura na lista geral
+	if (!catId && item.category_name) {
+		const found = allCategories.value.find((c) => c.name === item.category_name)
+		if (found) {
+			catId = found.id
+		}
+	}
 
 	return {
 		...item,
-		// Forçamos o category_id para o ArticleCard conseguir fazer o router.push
+		// Garante que o ID vai para o cartão (agora recuperado via Lookup se necessário)
 		category_id: catId,
 
-		// Normaliza o conteúdo/descrição
+		// Normaliza descrição
 		content:
 			item.excerpt ||
 			item.description ||
 			item.content ||
 			item.body ||
-			"Sem descrição disponível.",
+			"Sem descrição.",
 
-		// Normaliza o objeto categoria para exibir o nome
-		category: item.category || { name: item.category_name || "Geral" },
+		// Normaliza objeto categoria
+		category: item.category || {
+			id: catId,
+			name: item.category_name || "Geral",
+		},
 	}
 }
 
-const checkIfFavorite = (id) => {
-	return myFavoritesIds.value.includes(id)
-}
+const checkIfFavorite = (id) => myFavoritesIds.value.includes(id)
 
 const handleToggleFavorite = async (item) => {
 	const type = item.type || (item.interviewee ? "interview" : "article")
 	const id = item.id
-
 	try {
 		if (checkIfFavorite(id)) {
 			await userService.removeFavorite(type, id)
@@ -161,7 +163,7 @@ const handleToggleFavorite = async (item) => {
 			myFavoritesIds.value.push(id)
 		}
 	} catch (error) {
-		console.error("Erro ao atualizar favorito", error)
+		console.error(error)
 	}
 }
 
