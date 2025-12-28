@@ -6,6 +6,8 @@
 		</p>
 
 		<div v-if="loading" class="text-center py-12">
+			<div
+				class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-2"></div>
 			<p class="text-gray-500">A carregar os teus favoritos...</p>
 		</div>
 
@@ -22,56 +24,13 @@
 		</div>
 
 		<div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			<div
+			<ArticleCard
 				v-for="fav in favorites"
-				:key="fav.id + fav.type"
-				class="bg-white rounded-lg shadow hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-100 flex flex-col">
-				<div class="p-5 flex-1">
-					<div class="flex justify-between items-start mb-2">
-						<span
-							class="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded"
-							:class="
-								fav.type === 'interview'
-									? 'bg-purple-100 text-purple-700'
-									: 'bg-blue-100 text-blue-700'
-							">
-							{{ fav.type === "interview" ? "Entrevista" : "Artigo" }}
-						</span>
-
-						<button
-							@click="removeFavorite(fav)"
-							class="text-gray-400 hover:text-red-500 transition-colors"
-							title="Remover dos favoritos"
-							:disabled="processingId === fav.id">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-5 w-5"
-								viewBox="0 0 20 20"
-								fill="currentColor">
-								<path
-									fill-rule="evenodd"
-									d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-									clip-rule="evenodd" />
-							</svg>
-						</button>
-					</div>
-
-					<h3 class="font-bold text-lg text-gray-800 mb-2 line-clamp-2">
-						{{ fav.item?.title || "Conteúdo sem título" }}
-					</h3>
-
-					<p class="text-gray-500 text-sm line-clamp-3">
-						{{ fav.item?.content || "Sem pré-visualização disponível." }}
-					</p>
-				</div>
-
-				<div class="px-5 py-3 bg-gray-50 border-t border-gray-100 mt-auto">
-					<button
-						class="text-sm font-medium text-primary hover:text-opacity-80">
-						Ler agora &rarr;
-					</button>
-				</div>
-			</div>
+				:key="fav.id"
+				:content="getFavoriteContent(fav)"
+				:is-favorite="true"
+				:variant="fav.type === 'interview' ? 'purple' : 'blue'"
+				@toggle-favorite="() => removeFavorite(fav)" />
 		</div>
 	</div>
 </template>
@@ -79,15 +38,15 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import userService from "@/services/userService"
+import ArticleCard from "@/components/ArticleCard.vue"
 
 const favorites = ref([])
 const loading = ref(true)
-const processingId = ref(null)
 
 const fetchFavorites = async () => {
 	try {
 		const response = await userService.getFavorites()
-		// Tratamento robusto para garantir que é array (igual fizemos nos Interesses)
+		// A API retorna { "data": [...] }
 		favorites.value = response.data || []
 	} catch (error) {
 		console.error("Erro ao carregar favoritos:", error)
@@ -96,22 +55,33 @@ const fetchFavorites = async () => {
 	}
 }
 
-const removeFavorite = async (fav) => {
-	if (!confirm("Tens a certeza que queres remover dos favoritos?")) return
+// 🔧 ADAPTADOR: Transforma os dados da API no formato que o Card espera
+const getFavoriteContent = (fav) => {
+	return {
+		id: fav.id,
+		title: fav.title,
+		// Mapeamos 'excerpt' (da API) para 'content' (do Card)
+		content: fav.excerpt,
+		type: fav.type,
+		// Criamos um objeto category para o Card conseguir ler 'category.name'
+		category: {
+			name: fav.category_name,
+		},
+		date: fav.date,
+	}
+}
 
-	processingId.value = fav.id
+const removeFavorite = async (fav) => {
+	if (!confirm("Queres remover este item dos favoritos?")) return
+
 	try {
-		// Assume que a API precisa de { type, id } do item
-		// Nota: Verifica se 'fav.id' é o ID do favorito ou do artigo.
-		// Normalmente no POST enviamos {id: artigo_id}, aqui vamos assumir que fav.id é o ID do item
+		// Como o ID que vem no JSON é o do artigo (ex: 8), usamos direto
 		await userService.removeFavorite(fav.type, fav.id)
 
-		// Remove da lista localmente
+		// Remove da lista visualmente
 		favorites.value = favorites.value.filter((item) => item.id !== fav.id)
 	} catch (error) {
 		console.error("Erro ao remover favorito:", error)
-	} finally {
-		processingId.value = null
 	}
 }
 
