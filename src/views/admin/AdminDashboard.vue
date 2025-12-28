@@ -22,7 +22,13 @@
 								Utilizadores
 							</p>
 							<h3 class="text-2xl font-bold text-gray-800 mt-1">
-								{{ stats.users_count || 0 }}
+								{{
+									stats.users ||
+									stats.users_count ||
+									stats.total_users ||
+									stats.count_users ||
+									0
+								}}
 							</h3>
 						</div>
 						<span class="text-2xl">👥</span>
@@ -38,10 +44,16 @@
 								Artigos
 							</p>
 							<h3 class="text-2xl font-bold text-gray-800 mt-1">
-								{{ stats.articles_count || 0 }}
+								{{
+									stats.articles ||
+									stats.articles_count ||
+									stats.total_articles ||
+									stats.count_articles ||
+									0
+								}}
 							</h3>
 						</div>
-						<span class="text-2xl">qm</span>
+						<span class="text-2xl">📰</span>
 					</div>
 				</div>
 
@@ -54,7 +66,13 @@
 								Entrevistas
 							</p>
 							<h3 class="text-2xl font-bold text-gray-800 mt-1">
-								{{ stats.interviews_count || 0 }}
+								{{
+									stats.interviews ||
+									stats.interviews_count ||
+									stats.total_interviews ||
+									stats.count_interviews ||
+									0
+								}}
 							</h3>
 						</div>
 						<span class="text-2xl">🎤</span>
@@ -70,10 +88,15 @@
 								Categorias
 							</p>
 							<h3 class="text-2xl font-bold text-gray-800 mt-1">
-								{{ stats.categories_count || 0 }}
+								{{
+									stats.categories ||
+									stats.categories_count ||
+									stats.total_categories ||
+									0
+								}}
 							</h3>
 						</div>
-						<span class="text-2xl">Qm</span>
+						<span class="text-2xl">📂</span>
 					</div>
 				</div>
 			</div>
@@ -84,22 +107,22 @@
 					<router-link
 						to="/admin/articles"
 						class="px-4 py-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 font-medium text-sm transition-colors inline-block">
-						+ Artigos
+						+ Gerir Artigos
 					</router-link>
 					<router-link
 						to="/admin/interviews"
 						class="px-4 py-2 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 font-medium text-sm transition-colors inline-block">
-						+ Entrevistas
+						+ Gerir Entrevistas
 					</router-link>
 					<router-link
 						to="/admin/categories"
 						class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 font-medium text-sm transition-colors inline-block">
-						+ Categorias
+						+ Gerir Categorias
 					</router-link>
 					<router-link
 						to="/admin/users"
 						class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors ml-auto flex items-center">
-						👥 Usuários
+						👥 Gerir Utilizadores
 					</router-link>
 				</div>
 			</div>
@@ -165,6 +188,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import adminService from "@/services/adminService"
+import contentService from "@/services/contentService" // <--- IMPORTANTE
 
 const loading = ref(true)
 const stats = ref({})
@@ -173,27 +197,44 @@ const logs = ref([])
 const fetchDashboardData = async () => {
 	loading.value = true
 	try {
-		// Buscamos Stats e Logs em paralelo
-		const [statsRes, logsRes] = await Promise.all([
+		// SOLUÇÃO: Pedimos as categorias em paralelo
+		const [statsRes, logsRes, catsRes] = await Promise.all([
 			adminService.getDashboardStats(),
 			adminService.getLogs(),
+			contentService.getCategories(),
 		])
 
-		// O backend pode retornar os dados dentro de .data ou direto
-		stats.value = statsRes.data || statsRes || {}
+		console.log("📊 RESPOSTA DA API (STATS):", statsRes)
+
+		// 1. Processar LOGS
 		logs.value = logsRes.data || logsRes || []
 
-		// Se a API de stats retornar array, tentamos normalizar (fallback)
-		if (Array.isArray(stats.value)) {
-			// Caso a API não esteja pronta, usamos dados fictícios para não quebrar o layout
-			console.warn("API de stats retornou array, usando fallback")
-			stats.value = {
-				users_count: 0,
-				articles_count: 0,
-				interviews_count: 0,
-				categories_count: 0,
-			}
+		// 2. Processar STATS
+		let raw = statsRes.data || statsRes || {}
+
+		if (Array.isArray(raw)) {
+			raw = raw.length > 0 ? raw[0] : {}
 		}
+
+		// Normalização de dados aninhados
+		if (
+			raw.users === undefined &&
+			raw.users_count === undefined &&
+			raw.total_users === undefined
+		) {
+			if (raw.data) raw = raw.data
+			else if (raw.stats) raw = raw.stats
+			else if (raw.counts) raw = raw.counts
+			else if (raw.original) raw = raw.original
+		}
+
+		// SOLUÇÃO FINAL: Se a API não trouxe categorias, contamos manualmente
+		const cats = catsRes.data || catsRes || []
+		if (!raw.total_categories && !raw.categories_count) {
+			raw.total_categories = cats.length
+		}
+
+		stats.value = raw
 	} catch (error) {
 		console.error("Erro ao carregar dashboard admin:", error)
 	} finally {
@@ -211,7 +252,6 @@ const handleClearLogs = async () => {
 	}
 }
 
-// Helper para colorir os métodos HTTP na tabela
 const getMethodClass = (method) => {
 	const m = (method || "").toUpperCase()
 	if (m === "GET") return "bg-blue-50 text-blue-600 border-blue-100"
