@@ -94,10 +94,11 @@
 						class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 font-medium text-sm transition-colors inline-block">
 						+ Categorias
 					</router-link>
-					<button
-						class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors ml-auto">
-						+ Usuários
-					</button>
+					<router-link
+						to="/admin/users"
+						class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors ml-auto flex items-center">
+						👥 Gerir Utilizadores
+					</router-link>
 				</div>
 			</div>
 
