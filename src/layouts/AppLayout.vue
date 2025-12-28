@@ -13,6 +13,12 @@
 					class="block py-2 px-4 text-gray-600 hover:bg-gray-50 rounded"
 					>Meu Perfil</router-link
 				>
+				<router-link
+					to="/app/interests"
+					class="block py-2 px-4 text-gray-600 hover:bg-gray-50 rounded"
+					active-class="bg-gray-100 text-primary font-bold">
+					❤️ Interesses
+				</router-link>
 			</nav>
 		</aside>
 
