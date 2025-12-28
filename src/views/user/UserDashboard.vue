@@ -32,7 +32,7 @@
 					<ArticleCard
 						v-for="item in recommended"
 						:key="'rec-' + item.id"
-						:content="item"
+						:content="normalizeItem(item)"
 						:is-favorite="checkIfFavorite(item.id)"
 						@toggle-favorite="handleToggleFavorite" />
 				</div>
@@ -47,7 +47,7 @@
 					<ArticleCard
 						v-for="item in interviews"
 						:key="'int-' + item.id"
-						:content="{ ...item, type: 'interview' }"
+						:content="normalizeItem({ ...item, type: 'interview' })"
 						:is-favorite="checkIfFavorite(item.id)"
 						@toggle-favorite="handleToggleFavorite"
 						variant="purple" />
@@ -60,7 +60,7 @@
 					<ArticleCard
 						v-for="item in articles"
 						:key="'art-' + item.id"
-						:content="{ ...item, type: 'article' }"
+						:content="normalizeItem({ ...item, type: 'article' })"
 						:is-favorite="checkIfFavorite(item.id)"
 						@toggle-favorite="handleToggleFavorite" />
 				</div>
@@ -83,8 +83,6 @@ import { ref, onMounted } from "vue"
 import { useAuthStore } from "@/stores/auth"
 import contentService from "@/services/contentService"
 import userService from "@/services/userService"
-
-// IMPORTAR O NOVO COMPONENTE AQUI 👇
 import ArticleCard from "@/components/ArticleCard.vue"
 
 const authStore = useAuthStore()
@@ -106,7 +104,6 @@ const fetchData = async () => {
 			userService.getFavorites(),
 		])
 
-		// Garante que é array acessando .data se existir, ou o próprio objeto, ou array vazio
 		recommended.value = dashRes.data || (Array.isArray(dashRes) ? dashRes : [])
 		articles.value = artRes.data || (Array.isArray(artRes) ? artRes : [])
 		interviews.value = intRes.data || (Array.isArray(intRes) ? intRes : [])
@@ -120,12 +117,35 @@ const fetchData = async () => {
 	}
 }
 
-// Verifica se um item está nos favoritos
+// 🔧 FUNÇÃO DE NORMALIZAÇÃO CORRIGIDA
+const normalizeItem = (item) => {
+	// Tenta encontrar o ID da categoria em vários lugares possíveis
+	// 1. item.category_id (padrão SQL)
+	// 2. item.category.id (se vier objeto aninhado)
+	const catId = item.category_id || (item.category ? item.category.id : null)
+
+	return {
+		...item,
+		// Forçamos o category_id para o ArticleCard conseguir fazer o router.push
+		category_id: catId,
+
+		// Normaliza o conteúdo/descrição
+		content:
+			item.excerpt ||
+			item.description ||
+			item.content ||
+			item.body ||
+			"Sem descrição disponível.",
+
+		// Normaliza o objeto categoria para exibir o nome
+		category: item.category || { name: item.category_name || "Geral" },
+	}
+}
+
 const checkIfFavorite = (id) => {
 	return myFavoritesIds.value.includes(id)
 }
 
-// Lógica de Adicionar/Remover Favorito
 const handleToggleFavorite = async (item) => {
 	const type = item.type || (item.interviewee ? "interview" : "article")
 	const id = item.id

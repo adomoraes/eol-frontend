@@ -3,18 +3,19 @@
 		class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden flex flex-col h-full">
 		<div class="p-5 flex-1">
 			<div class="flex justify-between items-start mb-3">
-				<span
+				<button
+					@click.stop="goToCategory"
 					:class="
 						variant === 'purple'
-							? 'bg-purple-100 text-purple-700'
-							: 'bg-blue-100 text-blue-700'
+							? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+							: 'bg-blue-100 text-blue-700 hover:bg-blue-200'
 					"
-					class="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded">
+					class="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded transition-colors">
 					{{
 						content.category?.name ||
 						(content.type === "interview" ? "Entrevista" : "Artigo")
 					}}
-				</span>
+				</button>
 
 				<button
 					@click.stop="$emit('toggle-favorite', content)"
@@ -51,7 +52,10 @@
 		<div
 			class="px-5 py-3 bg-gray-50 border-t border-gray-100 mt-auto flex justify-between items-center">
 			<span class="text-xs text-gray-400">{{ formatDate(content.date) }}</span>
-			<button class="text-sm font-medium text-primary hover:text-opacity-80">
+
+			<button
+				@click.stop="goToArticle"
+				class="text-sm font-medium text-primary hover:text-opacity-80 hover:underline">
 				Ler mais &rarr;
 			</button>
 		</div>
@@ -59,7 +63,11 @@
 </template>
 
 <script setup>
-defineProps({
+import { useRouter } from "vue-router" // <--- IMPORTAÇÃO ESSENCIAL
+
+const router = useRouter() // <--- INICIALIZAÇÃO ESSENCIAL
+
+const props = defineProps({
 	content: Object,
 	isFavorite: Boolean,
 	variant: String,
@@ -69,6 +77,39 @@ defineEmits(["toggle-favorite"])
 
 const formatDate = (dateString) => {
 	if (!dateString) return new Date().toLocaleDateString()
-	return new Date(dateString).toLocaleDateString()
+	return new Date(dateString).toLocaleDateString("pt-PT", {
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	})
+}
+
+// Navegar para Categoria
+const goToCategory = () => {
+	if (props.content.category_id) {
+		router.push({
+			name: "CategoryView",
+			params: { id: props.content.category_id },
+		})
+	}
+}
+
+// Navegar para Artigo Completo
+const goToArticle = () => {
+	const type =
+		props.content.type || (props.variant === "purple" ? "interview" : "article")
+	// Fallback de segurança para o ID
+	const targetId =
+		props.content.id || props.content.item_id || props.content.article_id
+
+	if (targetId) {
+		router.push({
+			name: "ReadContent",
+			params: {
+				type: type,
+				id: targetId,
+			},
+		})
+	}
 }
 </script>

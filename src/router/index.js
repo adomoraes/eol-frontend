@@ -48,6 +48,21 @@ const routes = [
 				component: () => import("@/views/user/UserFavorites.vue"),
 				meta: { requiresAuth: true },
 			},
+			{
+				// :type será "article" ou "interview"
+				// :id será o número do artigo
+				path: "read/:type/:id",
+				name: "ReadContent",
+				component: () => import("@/views/user/ReadContentView.vue"),
+				meta: { requiresAuth: true },
+			},
+			// 📂 Rota de Categoria (ESTA ERA A QUE FALTAVA)
+			{
+				path: "category/:id",
+				name: "CategoryView",
+				component: () => import("@/views/user/CategoryView.vue"),
+				meta: { requiresAuth: true },
+			},
 		],
 	},
 

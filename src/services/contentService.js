@@ -24,4 +24,14 @@ export default {
 		const response = await api.get("/interviews")
 		return response.data
 	},
+	// 📖 Ler Conteúdo Específico (Artigo ou Entrevista)
+	async getContent(type, id) {
+		// Define o endpoint baseado no tipo ('article' ou 'interview')
+		// Endpoint esperado: GET /articles/1 ou GET /interviews/1
+		const endpoint =
+			type === "interview" ? `/interviews?id=${id}` : `/article?id=${id}`
+
+		const response = await api.get(endpoint)
+		return response.data
+	},
 }
