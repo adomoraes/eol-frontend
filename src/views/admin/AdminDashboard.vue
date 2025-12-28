@@ -81,10 +81,11 @@
 			<div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
 				<h2 class="text-lg font-bold text-gray-800 mb-4">⚡ Ações Rápidas</h2>
 				<div class="flex flex-wrap gap-3">
-					<button
-						class="px-4 py-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 font-medium text-sm transition-colors">
-						+ Novo Artigo
-					</button>
+					<router-link
+						to="/admin/articles"
+						class="px-4 py-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 font-medium text-sm transition-colors inline-block">
+						+ Artigos
+					</router-link>
 					<button
 						class="px-4 py-2 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 font-medium text-sm transition-colors">
 						+ Nova Entrevista
@@ -97,7 +98,7 @@
 					<router-link
 						to="/admin/users"
 						class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 font-medium text-sm transition-colors ml-auto flex items-center">
-						👥 Gerir Utilizadores
+						👥 Usuários
 					</router-link>
 				</div>
 			</div>
