@@ -89,4 +89,16 @@ export default {
 		const response = await api.post("/admin/import/interview", jsonData)
 		return response.data
 	},
+
+	async updateInterview(interviewData) {
+		// PUT /interviews
+		const response = await api.put("/interviews", interviewData)
+		return response.data
+	},
+
+	async deleteInterview(id) {
+		// DELETE /interviews
+		const response = await api.delete("/interviews", { data: { id } })
+		return response.data
+	},
 }

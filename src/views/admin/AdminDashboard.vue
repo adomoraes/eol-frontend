@@ -86,10 +86,11 @@
 						class="px-4 py-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 font-medium text-sm transition-colors inline-block">
 						+ Artigos
 					</router-link>
-					<button
-						class="px-4 py-2 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 font-medium text-sm transition-colors">
-						+ Nova Entrevista
-					</button>
+					<router-link
+						to="/admin/interviews"
+						class="px-4 py-2 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 font-medium text-sm transition-colors inline-block">
+						+ Entrevistas
+					</router-link>
 					<router-link
 						to="/admin/categories"
 						class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 font-medium text-sm transition-colors inline-block">
